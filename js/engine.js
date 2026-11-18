@@ -6,10 +6,10 @@ import { STYLES } from './styles.js';
 
 // Mixer channels. "duck" is the amount of sidechain ducking from the kick.
 const CHANNELS = {
-  drums: { level: 0.85, reverb: 0.06, delay: 0, duck: 0 },
+  drums: { level: 0.68, reverb: 0.06, delay: 0, duck: 0 },
   perc: { level: 0.7, reverb: 0.22, delay: 0.08, duck: 0 },
-  gears: { level: 0.38, reverb: 0.3, delay: 0.35, duck: 0.15 },
-  bass: { level: 0.6, reverb: 0, delay: 0, duck: 0.45 },
+  gears: { level: 0.19, reverb: 0.3, delay: 0.35, duck: 0.15 },
+  bass: { level: 0.66, reverb: 0, delay: 0, duck: 0.45 },
   keys: { level: 0.85, reverb: 0.35, delay: 0.12, duck: 0.3, autopan: true },
   pad: { level: 0.55, reverb: 0.6, delay: 0, duck: 0.4, filter: true },
   lead: { level: 0.42, reverb: 0.4, delay: 0.3, duck: 0.15 },
