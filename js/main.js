@@ -9,9 +9,11 @@ import { randomSeed } from './random.js';
 import { Visualizer } from './visual.js';
 
 const LAYER_LABELS = {
-  drums: 'Drums', perc: 'Percussion', gears: 'Bells & kalimba', bass: 'Bass',
+  drums: 'Drums', perc: 'Percussion', gears: 'Bells', bass: 'Bass',
   keys: 'Rhodes', pad: 'Pad', lead: 'Lead', texture: 'Texture',
 };
+// Longer names for tooltips.
+const LAYER_TITLES = { gears: 'Bells, kalimba and marimba patterns', texture: 'Vinyl crackle, air and birds' };
 const STORAGE_KEY = 'organic-electronica-settings';
 
 // ---------------------------------------------------------------------------
@@ -21,10 +23,15 @@ function loadSettings() {
   const defaults = {
     style: 'organic', bpm: STYLES.organic.bpm, key: 9, energy: 0.65, volume: 0.8,
     seed: randomSeed(), mutes: Object.fromEntries(MIXER_GROUPS.map((g) => [g, false])),
+    levels: Object.fromEntries(MIXER_GROUPS.map((g) => [g, 1])),
   };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    const merged = { ...defaults, ...saved, mutes: { ...defaults.mutes, ...(saved.mutes || {}) } };
+    const merged = {
+      ...defaults, ...saved,
+      mutes: { ...defaults.mutes, ...(saved.mutes || {}) },
+      levels: { ...defaults.levels, ...(saved.levels || {}) },
+    };
     if (!STYLES[merged.style]) merged.style = defaults.style;
     return merged;
   } catch {
@@ -66,7 +73,10 @@ class Player {
     await this.ctx.resume();
     this.engine = new AudioEngine(this.ctx);
     this.engine.master.gain.value = this.muted ? 0 : settings.volume;
-    for (const group of MIXER_GROUPS) this.engine.setMuted(group, settings.mutes[group]);
+    for (const group of MIXER_GROUPS) {
+      this.engine.setChannelLevel(group, settings.levels[group]);
+      this.engine.setMuted(group, settings.mutes[group]);
+    }
 
     if (!this.composer) {
       this.composer = new Composer(settings);
@@ -133,20 +143,60 @@ function buildStyleButtons() {
   });
 }
 
-function buildLayerButtons() {
-  const box = $('layers');
+/** Simple mixer: one fader and one mute button per instrument group. */
+function buildMixer() {
+  const box = $('mixer');
   for (const group of MIXER_GROUPS) {
-    const b = document.createElement('button');
-    b.textContent = LAYER_LABELS[group];
-    b.dataset.group = group;
-    b.addEventListener('click', () => {
+    const strip = document.createElement('div');
+    strip.className = 'strip';
+    strip.dataset.group = group;
+
+    const mute = document.createElement('button');
+    mute.className = 'mute';
+    mute.textContent = LAYER_LABELS[group];
+    mute.title = `${LAYER_TITLES[group] || LAYER_LABELS[group]}: click to mute or unmute`;
+    mute.addEventListener('click', () => {
       settings.mutes[group] = !settings.mutes[group];
       if (player.engine) player.engine.setMuted(group, settings.mutes[group]);
       updateUi();
       saveSettings();
     });
-    box.append(b);
+
+    const fader = document.createElement('input');
+    fader.type = 'range';
+    fader.min = 0;
+    fader.max = 150;
+    fader.step = 1;
+    fader.setAttribute('aria-label', `${LAYER_LABELS[group]} volume`);
+    fader.addEventListener('input', () => {
+      settings.levels[group] = Number(fader.value) / 100;
+      if (player.engine) player.engine.setChannelLevel(group, settings.levels[group]);
+      updateUi();
+      saveSettings();
+    });
+    // Double click resets the fader to the default level.
+    fader.addEventListener('dblclick', () => {
+      fader.value = 100;
+      fader.dispatchEvent(new Event('input'));
+    });
+
+    const value = document.createElement('output');
+    strip.append(mute, fader, value);
+    box.append(strip);
   }
+}
+
+function resetMixer() {
+  for (const group of MIXER_GROUPS) {
+    settings.levels[group] = 1;
+    settings.mutes[group] = false;
+    if (player.engine) {
+      player.engine.setChannelLevel(group, 1);
+      player.engine.setMuted(group, false);
+    }
+  }
+  updateUi();
+  saveSettings();
 }
 
 function buildKeySelect() {
@@ -174,7 +224,14 @@ function updateUi() {
   document.body.classList.toggle('playing', player.playing);
   $('play').setAttribute('aria-label', player.playing ? 'Stop' : 'Play');
   for (const b of $('styles').children) b.setAttribute('aria-checked', String(b.dataset.style === settings.style));
-  for (const b of $('layers').children) b.setAttribute('aria-pressed', String(!settings.mutes[b.dataset.group]));
+  for (const strip of $('mixer').children) {
+    const group = strip.dataset.group;
+    const percent = Math.round(settings.levels[group] * 100);
+    strip.classList.toggle('muted', settings.mutes[group]);
+    strip.querySelector('.mute').setAttribute('aria-pressed', String(settings.mutes[group]));
+    strip.querySelector('input').value = percent;
+    strip.querySelector('output').textContent = settings.mutes[group] ? 'muted' : `${percent} %`;
+  }
 
   const tempo = $('tempo');
   tempo.min = style.bpmMin;
@@ -261,6 +318,7 @@ function updateMediaSession() {
 function bindControls() {
   $('play').addEventListener('click', togglePlay);
   $('variation').addEventListener('click', newVariation);
+  $('mixer-reset').addEventListener('click', resetMixer);
   $('export').addEventListener('click', exportWav);
   $('tempo').addEventListener('input', (e) => {
     settings.bpm = Number(e.target.value);
@@ -290,7 +348,8 @@ function bindControls() {
   addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     // Form controls keep their own keyboard behavior.
-    if (e.target.closest('input, select')) return;
+    // Sliders do not use these keys, so shortcuts work there too.
+    if (e.target.closest('select') || (e.target.matches('input') && e.target.type !== 'range')) return;
     const k = e.key.toLowerCase();
     if (k === ' ') {
       e.preventDefault();
@@ -307,7 +366,7 @@ function bindControls() {
 }
 
 buildStyleButtons();
-buildLayerButtons();
+buildMixer();
 buildKeySelect();
 bindControls();
 updateUi();
