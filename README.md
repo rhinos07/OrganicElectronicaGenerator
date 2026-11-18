@@ -8,7 +8,11 @@ broken-beat influences.
 All sounds are synthesized with the Web Audio API. The project uses no audio
 samples, no build step and no external libraries.
 
-## Run
+## Live version
+
+<https://rhinos07.github.io/OrganicElectronicaGenerator/> (GitHub Pages, deployed from the `main` branch).
+
+## Run locally
 
 The app uses ES modules. Browsers do not load modules from `file://` URLs, so
 serve the folder with any static web server, for example:
