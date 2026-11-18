@@ -15,6 +15,9 @@ const LAYER_LABELS = {
 // Longer names for tooltips.
 const LAYER_TITLES = { gears: 'Bells, kalimba and marimba patterns', texture: 'Vinyl crackle, air and birds' };
 const STORAGE_KEY = 'organic-electronica-settings';
+// Increase when the default channel levels change. Saved fader positions of an
+// older version are then reset, because they refer to the old defaults.
+const MIXER_VERSION = 2;
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -24,6 +27,7 @@ function loadSettings() {
     style: 'organic', bpm: STYLES.organic.bpm, key: 9, energy: 0.65, volume: 0.8,
     seed: randomSeed(), mutes: Object.fromEntries(MIXER_GROUPS.map((g) => [g, false])),
     levels: Object.fromEntries(MIXER_GROUPS.map((g) => [g, 1])),
+    mixerVersion: MIXER_VERSION,
   };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -32,6 +36,10 @@ function loadSettings() {
       mutes: { ...defaults.mutes, ...(saved.mutes || {}) },
       levels: { ...defaults.levels, ...(saved.levels || {}) },
     };
+    if (saved.mixerVersion !== MIXER_VERSION) {
+      merged.levels = defaults.levels;
+      merged.mixerVersion = MIXER_VERSION;
+    }
     if (!STYLES[merged.style]) merged.style = defaults.style;
     return merged;
   } catch {
