@@ -8,7 +8,7 @@ import { STYLES } from './styles.js';
 const CHANNELS = {
   drums: { level: 0.85, reverb: 0.06, delay: 0, duck: 0 },
   perc: { level: 0.7, reverb: 0.22, delay: 0.08, duck: 0 },
-  gears: { level: 0.55, reverb: 0.3, delay: 0.35, duck: 0.15 },
+  gears: { level: 0.38, reverb: 0.3, delay: 0.35, duck: 0.15 },
   bass: { level: 0.6, reverb: 0, delay: 0, duck: 0.45 },
   keys: { level: 0.85, reverb: 0.35, delay: 0.12, duck: 0.3, autopan: true },
   pad: { level: 0.55, reverb: 0.6, delay: 0, duck: 0.4, filter: true },
@@ -282,6 +282,12 @@ export class AudioEngine {
 
   setVolume(volume) {
     this.master.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05);
+  }
+
+  /** Fader of a mixer channel: 1 is the default level, 0 is silent. */
+  setChannelLevel(group, value) {
+    const channel = this.channels[group];
+    if (channel) channel.level.gain.setTargetAtTime(channel.cfg.level * value, this.ctx.currentTime, 0.04);
   }
 
   setMuted(group, muted) {

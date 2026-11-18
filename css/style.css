@@ -125,7 +125,7 @@ button {
   gap: 0.4rem;
 }
 
-.styles button, .layers button, .secondary {
+.styles button, .mute, .secondary {
   padding: 0.55rem 0.95rem;
   border-radius: 0.7rem;
   background: #ffffff12;
@@ -133,7 +133,7 @@ button {
   transition: background 0.15s;
 }
 
-.styles button:hover, .layers button:hover, .secondary:hover { background: #ffffff22; }
+.styles button:hover, .mute:hover, .secondary:hover { background: #ffffff22; }
 
 .styles button[aria-checked="true"] {
   background: var(--accent);
@@ -178,19 +178,61 @@ select {
 
 select option { background: #1a1a1a; }
 
-.layers button {
+.mixer-box {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mixer-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
   font-size: 0.85rem;
-  padding: 0.4rem 0.8rem;
+  color: var(--muted);
 }
 
-.layers button[aria-pressed="false"] {
-  opacity: 0.45;
-  text-decoration: line-through;
+.link {
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-decoration: underline;
 }
 
-.layers button[aria-pressed="true"] {
+.mixer {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.5rem 0.6rem;
+}
+
+.strip {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.strip .mute {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glow) 70%, transparent);
 }
+
+.strip output {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.strip.muted .mute {
+  opacity: 0.45;
+  text-decoration: line-through;
+  box-shadow: inset 0 0 0 1px #ffffff1c;
+}
+
+.strip.muted input { opacity: 0.4; }
 
 .export {
   display: flex;
@@ -206,6 +248,10 @@ select option { background: #1a1a1a; }
   margin: 0;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+@media (max-width: 48rem) {
+  .mixer { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 @media (max-width: 40rem) {

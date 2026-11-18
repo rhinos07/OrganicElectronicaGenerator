@@ -55,6 +55,10 @@ export async function renderOffline(settings, seconds, onProgress) {
   const ctx = new OfflineAudioContext(2, Math.ceil(sampleRate * seconds), sampleRate);
   const engine = new AudioEngine(ctx);
   engine.master.gain.value = settings.volume ?? 0.8;
+  for (const [group, value] of Object.entries(settings.levels || {})) {
+    const channel = engine.channels[group];
+    if (channel) channel.level.gain.value = channel.cfg.level * value;
+  }
   for (const [group, muted] of Object.entries(settings.mutes || {})) {
     if (muted) engine.channels[group].mute.gain.value = 0;
   }

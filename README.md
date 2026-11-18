@@ -33,7 +33,7 @@ Then open <http://localhost:8000>. GitHub Pages also works without changes.
 | Key | Tonic of the (minor / dorian) key |
 | Energy | Density of the drums and percussion |
 | Volume (M = mute) | Master volume |
-| Layers | Mute or unmute each instrument group |
+| Mixer | One fader (0–150 %, double click = 100 %) and one mute button per instrument group; Reset restores the defaults |
 | New variation (N) | New seed: new harmony, patterns and melodies |
 | Export WAV | Renders 2, 4 or 6 minutes of the current settings to a WAV file |
 | H | Hide or show the control panel |
